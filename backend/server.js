@@ -7,14 +7,11 @@ const imageRoutes = require("./routes/imageRoutes");
 
 const app = express();
 
-// Connect to Database
-connectDB();
-
 // Middleware
 app.use(cors());
 app.use(express.json());
 
-// Serve static files (Note: local uploads won't persist on Render/Vercel)
+// Serve static files
 const path = require("path");
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
@@ -22,16 +19,27 @@ app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.use("/api/categories", categoryRoutes);
 app.use("/api/images", imageRoutes);
 
-// Root route for health check
+// Root route
 app.get("/", (req, res) => {
   res.send("HKP API is running...");
 });
 
-// For Render/Local: Listen on port
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-});
+// For Render/Local: Connect DB then Listen
+const startServer = async () => {
+  try {
+    await connectDB();
+    const PORT = process.env.PORT || 5000;
+    app.listen(PORT, () => {
+      console.log(`Server is running on port ${PORT}`);
+    });
+  } catch (error) {
+    console.error("Failed to start server:", error);
+  }
+};
 
-// For Vercel: Export the app
+if (process.env.NODE_ENV !== 'production' || process.env.RENDER) {
+  startServer();
+}
+
+// For Vercel
 module.exports = app;
